@@ -1,11 +1,23 @@
 0.9.30 (in development)
-- Improved: Enemy scaling now caps out at 20 players, doing more adds too much stress to the server.
 - Improved: Vehicles now temporarily disable collisions when entering a changelevel trigger, remains disabled set by settings.
+- Improved: When using medkit to revive the teammate now have a progress bar.
+- Improved: Compatibility with "Enhanced PlayerModel Selector" addon.
+- Improved: Simplified Chinese localization.
+- Improved: Changelevel triggers that lead back now use a func_brush to block players instead of pushing them away.
+- Improved: Cockroach behavior, they now flee properly, avoid walls and move faster.
+- Improved: Enemy scaling is now based on the difficulty setting.
 - Added: Setting to disable vehicle collisions.
 - Fixed: Bad lightning by forcing r_radiosity convar to 4.
 - Fixed: Multiple weapons dissolving when an NPC dies.
 - Fixed: ep1_citadel_03 disabled clip so Alyx can go through the door sooner.
 - Fixed: Missing default crosshair and incomplete QuickInfo crosshair.
+- Fixed: Rare game freeze on community maps when it's playing a cutscene.
+- Fixed: Incorrect AUX power when server have "gmod_suit 1".
+- Fixed: Players that did not reach the changelevel trigger could sometimes be softlocked in the next map.
+- Fixed: Sprinting could cut off dialogue relayed to the player, such as Breen's speech in d3_breen_01.
+- Fixed: Ragdoll gibs spamming console errors.
+- Fixed: d2_prison_08: Lua error from a malformed AddOutput and Eli's pod skipping its approach animation.
+- Fixed: Scaled enemies overfilling squads, leaving many of them idle instead of attacking.
 
 0.9.29
 - Improved: Use new checkpoint structure in mapscripts where possible with better positioning (first 5 chapters).

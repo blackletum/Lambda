@@ -565,7 +565,8 @@ if SERVER then
             if self.MapScript.PostPlayerSpawn ~= nil then self.MapScript:PostPlayerSpawn(ply) end
             -- In case the map script decides to put us in a vehicle lets not do this.
             if useSpawnpoint == true and IsValid(ply:GetVehicle()) == false and IsValid(ply.SelectedSpawnpoint) then
-                ply:TeleportPlayer(ply.SelectedSpawnpoint:GetPos(), ply.SelectedSpawnpoint:GetAngles())
+                local spawnPos = ply.SelectedSpawnpoint:GetPos()
+                ply:TeleportPlayer(spawnPos, ply.SelectedSpawnpoint:GetAngles())
                 ply.SelectedSpawnpoint = nil
             end
 
@@ -1023,7 +1024,7 @@ local function CanPlaySound(ply)
 end
 
 function GM:PlayerRejectSprinting(ply, mv)
-    if CanPlaySound(ply) then ply:EmitSound("HL2Player.SprintNoPower") end
+    if CanPlaySound(ply) then util.EmitSoundScript(ply, "HL2Player.SprintNoPower", CHAN_ITEM) end
 end
 
 function GM:PlayerStartSprinting(ply, mv)
@@ -1034,7 +1035,7 @@ function GM:PlayerStartSprinting(ply, mv)
     ply:SetMaxSpeed(self:GetSetting("sprintspeed"))
     ply:SetLambdaSprinting(true)
     local suitPower = ply:GetLambdaSuitPower()
-    if CanPlaySound(ply) and suitPower > 0 then ply:EmitSound("HL2Player.SprintStart") end
+    if CanPlaySound(ply) and suitPower > 0 then util.EmitSoundScript(ply, "HL2Player.SprintStart", CHAN_ITEM) end
     --DbgPrint("Sprint State: " .. tostring(ply:GetLambdaSprinting()))
 end
 
@@ -1171,7 +1172,12 @@ function GM:FinishMove(ply, mv)
         local modifiedPlayer = false
         if ply.TeleportQueue ~= nil and #ply.TeleportQueue > 0 then
             local data = ply.TeleportQueue[1]
-            ply:SetPos(data.pos)
+            -- Compensate for issue https://github.com/Facepunch/garrysmod-issues/issues/6658
+            local teleportPos = data.pos
+            if true then
+                teleportPos = teleportPos + (VectorRand() * Vector(0.1, 0.1, 0.0))
+            end
+            ply:SetPos(teleportPos)
             ply:SetAngles(data.ang)
             ply:SetVelocity(data.vel)
             ply:SetEyeAngles(data.ang)
@@ -1477,9 +1483,9 @@ function GM:GravGunPunt(ply, ent)
     return BaseClass.GravGunPickupAllowed(ply, ent)
 end
 
-function GM:PlayerFootstep(ply, pos, foot, sound, volume, filter)
+function GM:PlayerFootstep(ply, pos, foot, snd, volume, filter)
     if ply:KeyDown(IN_WALK) then return true end
-    if SERVER then self:NotifyNPCFootsteps(ply, pos, foot, sound, volume) end
+    if SERVER then self:NotifyNPCFootsteps(ply, pos, foot, snd, volume) end
 end
 
 function GM:PlayerSwitchWeapon(ply, old, new)

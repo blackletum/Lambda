@@ -4,6 +4,7 @@ end
 
 local DbgPrint = GetLogging("Medkit")
 local math_clamp = math.Clamp
+local CurTime = CurTime
 
 SWEP.PrintName = "Medkit"
 SWEP.Author = "Lambda"
@@ -64,6 +65,7 @@ local HEAL_DELAY = 0.5
 local PLAYER_HULL_MINS = Vector(-16, -16, 0)
 local PLAYER_HULL_MAXS = Vector(16, 16, 72)
 local CUSTOM_MAT_NAME = "LambdaMedKitMat" .. math.random(1, 1000)
+local UPDATE_TIME = 1 / 30
 
 --
 -- ConVars
@@ -94,9 +96,6 @@ function SWEP:Initialize()
         -- For interpolation.
         self.EnergyLevel = RECHARGE_TARGET
         self.ChargeBlink = 0
-
-        hook.Add("PreDrawPlayerHands", self, self.PreDrawPlayerHands)
-        hook.Add("PostDrawPlayerHands", self, self.PostDrawPlayerHands)
     end
 end
 
@@ -106,6 +105,14 @@ function SWEP:Think()
     if IsValid(owner) and owner:KeyDown(IN_ATTACK2) == false and not self:IsCurrentlyIdle() then
         self:StopCharging()
     end
+
+    if CLIENT then
+        self:SetNextClientThink(CurTime() + UPDATE_TIME)
+    else
+        self:NextThink(CurTime() + UPDATE_TIME)
+    end
+
+    return true
 end
 
 function SWEP:Recharge()
@@ -584,6 +591,24 @@ function SWEP:Holster(ent)
     return true
 end
 
+function SWEP:DrawHUD()
+    if self:GetState() ~= STATE_CHARGING then return end
+
+    local bgColor = Color(0, 0, 0, 150)
+    local barColor = Color(0, 200, 0, 255)
+    local textColor = Color(255, 255, 255, 255)
+
+    local progress = self:GetChargeEnergy() / REVIVE_AMOUNT
+
+    local w, h = 600, 30
+    local x = (ScrW() / 2) - (w / 2)
+    local y = (ScrH() * 0.8) - (h / 2)
+
+    draw.RoundedBox(8, x, y, w, h, bgColor)
+    draw.RoundedBox(8, x + 2, y + 2, (w - 4) * progress, h - 4, barColor)
+    draw.SimpleText("Reviving...", "DermaDefault", x + (w / 2), y - 15, textColor, TEXT_ALIGN_CENTER)
+end
+
 function SWEP:DrawWorldModel()
     self:DrawModel()
 end
@@ -645,22 +670,22 @@ function SWEP:PostDrawViewModel(vm, wep, ply)
     render.MaterialOverride(nil)
 end
 
-function SWEP:PreDrawPlayerHands(hands, vm, ply, wep)
-    render.MaterialOverride(nil)
-end
-
-function SWEP:PostDrawPlayerHands(hands, vm, ply, wep)
-    render.MaterialOverride(nil)
-end
-
 function SWEP:Ammo1()
-    local energy = math.Clamp(self:GetEnergy() - self:GetChargeEnergy(), 0, 100)
+    local energy = math.Round(math_clamp(self:GetEnergy() - self:GetChargeEnergy(), 0, 100))
 
     return energy
 end
 
 function SWEP:Ammo2()
     return 0
+end
+
+function SWEP:CustomAmmoDisplay()
+    local display = {}
+    display.Draw = true
+    display.PrimaryClip = self:Ammo1()
+
+    return display
 end
 
 if CLIENT then

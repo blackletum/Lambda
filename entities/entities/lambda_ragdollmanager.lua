@@ -114,6 +114,8 @@ local FLESH_MAT = Material("models/flesh")
 local MAX_SPEED_THRESHOLD = 300
 local MAX_GIBS = 100
 local GIBS_MAX_LIFETIME = 10
+local UPDATE_TIME = 1 / 30
+
 game.AddParticles("particles/blood_impact.pcf")
 game.AddParticles("particles/fire_01.pcf")
 
@@ -277,6 +279,8 @@ function ENT:CreateRagdoll(dmgForce, gibPlayer, didExplode)
     ragdoll:Spawn()
     ragdoll:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
+    hook.Run("CreateEntityRagdoll", self:GetOwner(), ragdoll)
+
     ragdoll.GetPlayerColor = function(s)
         if IsValid(owner) and owner.GetPlayerColor ~= nil then return owner:GetPlayerColor() end
     end
@@ -392,9 +396,9 @@ function ENT:Think()
     end
 
     if SERVER then
-        self:NextThink(CurTime() + 0.2)
+        self:NextThink(CurTime() + UPDATE_TIME)
     else
-        self:SetNextClientThink(CurTime())
+        self:SetNextClientThink(CurTime() + UPDATE_TIME)
     end
 
     return true
@@ -413,11 +417,11 @@ function ENT:UpdateGibPart(gib)
     gib.LastDroplet = curTime
 
     if math.random() < 0.5 then
-        ParticleEffectAttach("blood_impact_red_01_droplets", PATTACH_POINT_FOLLOW, gib, -1)
+        ParticleEffectAttach("blood_impact_red_01_droplets", PATTACH_ABSORIGIN_FOLLOW, gib, 0)
     end
 
     if math.random() < 0.5 then
-        ParticleEffectAttach("blood_impact_red_01_goop", PATTACH_POINT_FOLLOW, gib, -1)
+        ParticleEffectAttach("blood_impact_red_01_goop", PATTACH_ABSORIGIN_FOLLOW, gib, 0)
     end
 
     return true
@@ -556,15 +560,15 @@ function ENT:CreateGibPart(boneName, pos, ang, posOffset, angOffset, mdl, dmgFor
     gib.LastDroplet = 0
     gib.DropletTimeEnd = CurTime() + (math.random() * 4)
     -- Particles
-    ParticleEffectAttach("blood_impact_red_01_goop", PATTACH_POINT_FOLLOW, gib, 0)
+    ParticleEffectAttach("blood_impact_red_01_goop", PATTACH_ABSORIGIN_FOLLOW, gib, 0)
 
     if sizeType > 1 then
         local spray = BLOOD_SPRAY[sizeType]
-        ParticleEffectAttach(spray, PATTACH_POINT_FOLLOW, gib, 0)
+        ParticleEffectAttach(spray, PATTACH_ABSORIGIN_FOLLOW, gib, 0)
     end
 
     if exploded == true and math.random() > 0.8 then
-        ParticleEffectAttach("env_fire_tiny", PATTACH_POINT_FOLLOW, gib, 0)
+        ParticleEffectAttach("env_fire_tiny", PATTACH_ABSORIGIN_FOLLOW, gib, 0)
     end
 
     table.insert(self.GibParts, gib)
